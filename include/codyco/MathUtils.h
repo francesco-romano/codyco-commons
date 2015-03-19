@@ -94,6 +94,32 @@ namespace codyco {
                            Eigen::Ref<Eigen::MatrixXd> Apinv,
                            double tolerance,
                            unsigned int computationOptions = Eigen::ComputeThinU|Eigen::ComputeThinV);
+
+        /** @brief Computes the truncated pseudo inverse of a matrix
+         *
+         * This function computes the truncated pseudo inverse of a matrix.
+         * Singular values less than the input tolerance will be set to sero.
+         * By default the pseudo inverse will be computed by using the thin U and V unitary matrices.
+         * @note null space does not work for now. We should resize the matrix inside and this is a @todo
+         * @todo add default tolerance value.
+         *
+         * @param A the matrix to be pseudoinverted
+         * @param svdDecomposition the decomposition object (already allocated) to be used
+         * @param Apinv the matrix in which to save the pseudoinversion of A. The size must be correct (same as \f$A^\top\f$)
+         * @param nullSpaceOfA null space projector of the input matrix A. Pass empty matrix (size 0x0) to avoid computation.
+         * @param tolerance tolerance to be used for the truncation
+         * @param computationOptions Eigen options for the computation. By default compute the thin U and V matrices.
+         */
+        void pseudoInverse(const Eigen::Ref<const Eigen::MatrixXd>& A,
+                           Eigen::JacobiSVD<Eigen::MatrixXd::PlainObject>& svdDecomposition,
+                           Eigen::Ref<Eigen::MatrixXd> Apinv,
+                           Eigen::Ref<Eigen::MatrixXd> nullSpaceOfA,
+                           double tolerance,
+                           unsigned int computationOptions = Eigen::ComputeThinU|Eigen::ComputeThinV);
+
+        /** @brief do not use for now
+         */
+        void nullSpaceProjectorFromDecomposition(Eigen::JacobiSVD<Eigen::MatrixXd::PlainObject>& svdDecomposition, Eigen::Ref<Eigen::MatrixXd> nullSpaceOfMatrix);
         
         /** @brief Computes the skew-symmetric (3D) matrix form of 
          *  the input 3D vector for cross-product computation

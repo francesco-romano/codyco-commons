@@ -95,13 +95,45 @@ namespace codyco {
                            unsigned int computationOptions)
         {
             using namespace Eigen;
-            svdDecomposition.compute(A, computationOptions);
-            JacobiSVD<MatrixXd::PlainObject>::SingularValuesType singularValues = svdDecomposition.singularValues();
-            for (int idx = 0; idx < singularValues.size(); idx++) {
-                singularValues(idx) = tolerance > 0 && singularValues(idx) > tolerance ? 1.0 / singularValues(idx) : 0.0;
-            }
-            Apinv = svdDecomposition.matrixV() * singularValues.asDiagonal() * svdDecomposition.matrixU().adjoint();
+            MatrixXd nullSpace;
+            pseudoInverse(A, svdDecomposition, Apinv, nullSpace, tolerance, computationOptions);
         }
+
+        void pseudoInverse(const Eigen::Ref<const Eigen::MatrixXd>& A,
+                           Eigen::JacobiSVD<Eigen::MatrixXd::PlainObject>& svdDecomposition,
+                           Eigen::Ref<Eigen::MatrixXd> Apinv,
+                           Eigen::Ref<Eigen::MatrixXd> nullSpaceOfA,
+                           double tolerance,
+                           unsigned int computationOptions)
+        {
+            using namespace Eigen;
+            svdDecomposition.compute(A, computationOptions);
+            if (computationOptions == 0) return; //if no computation options we cannot compute the pseudo inverse
+
+            JacobiSVD<MatrixXd::PlainObject>::SingularValuesType singularValues = svdDecomposition.singularValues();
+            int rank = 0;
+            for (int idx = 0; idx < singularValues.size(); idx++) {
+                if (tolerance > 0 && singularValues(idx) > tolerance) {
+                    singularValues(idx) = 1.0 / singularValues(idx);
+                    rank++;
+                } else {
+                    singularValues(idx) = 0.0;
+                }            }
+            Apinv = svdDecomposition.matrixV() * singularValues.asDiagonal() * svdDecomposition.matrixU().adjoint();
+
+            if ((nullSpaceOfA.cols() != 0 && nullSpaceOfA.rows() != 0) //if nullspace is not empty matrix
+                && (computationOptions & ComputeFullV)) { //if we have computed full V
+                //We can compute the null space projector
+//                const MatrixXd &vMatrix = svdDecomposition.matrixV();
+//                nullSpaceOfA = vMatrix.rightCols(A.cols() - rank) * vMatrix.rightCols(A.cols() - rank).transpose();
+            }
+        }
+
+        void nullSpaceProjectorFromDecomposition(Eigen::JacobiSVD<Eigen::MatrixXd::PlainObject>& svdDecomposition, Eigen::Ref<Eigen::MatrixXd> nullSpaceOfMatrix)
+        {
+            
+        }
+
         
         void skewSymmentricMatrixFrom3DVector(const Eigen::Ref<const Eigen::Vector3d>& vector, 
                                               Eigen::Ref<Eigen::Matrix3d> skewSymmetricMatrix)
